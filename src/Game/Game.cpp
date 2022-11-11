@@ -14,6 +14,10 @@ int screen_height;
 
 entt::registry reg;
 
+struct BallComponent{
+
+};
+
 struct PlayerComponent{
   int playerNum;
 };
@@ -52,6 +56,7 @@ void createBallEntity() //BALL
   reg.emplace<PositionComponent>(e, ballSpawnPosition);
   reg.emplace<VelocityComponent>(e, ballSpawnVelocity);
   reg.emplace<CubeComponent>(e, ballRect);   
+  reg.emplace<BallComponent>(e);
 }
 
 void createPlayerEntity(int num){
@@ -83,6 +88,34 @@ void cubeRenderSystem(SDL_Renderer* renderer) {
   }
 }
 
+void bounceSystem(double dT){
+  auto view = reg.view<PositionComponent, VelocityComponent, BallComponent, CubeComponent>();
+  for (const entt::entity e: view){
+     PositionComponent& pos = view.get<PositionComponent>(e);
+     VelocityComponent& vel = view.get<VelocityComponent>(e);
+     CubeComponent& cub = view.get<CubeComponent>(e);
+    if (pos.x <= 0)
+    {
+      vel.x *= -1;
+    }
+
+    if (pos.x + cub.w >= SCREEN_WIDTH)
+    {
+      vel.x *= -1;
+    }
+
+    if (pos.y <= 0)
+    {
+      vel.y *= -1;
+    }
+
+    if (pos.y + cub.h >= SCREEN_HEIGHT)
+    {
+      vel.y *= -1;
+    }
+  }
+}
+
 void movementSystem(double dT) {
   auto view = reg.view<PositionComponent, VelocityComponent>();
   for (const entt::entity e : view) {
@@ -111,7 +144,7 @@ bool paddleEventSystem(SDL_Event event) {
                     case SDLK_LEFT:
                       if (id == 1){
                         if(pos.x >= 0){
-                          vel.x = -100;
+                          vel.x = -200;
                         } else {
                           vel.x = 0;
                         }
@@ -120,7 +153,7 @@ bool paddleEventSystem(SDL_Event event) {
                     case SDLK_RIGHT:
                       if (id == 1){
                         if(pos.x + 100  <= SCREEN_WIDTH){
-                          vel.x = 100;  
+                          vel.x = 200;  
                         } else{
                           vel.x = 0;
                         }
@@ -129,7 +162,7 @@ bool paddleEventSystem(SDL_Event event) {
                     case SDLK_a:
                       if (id == 2){
                         if(pos.x >= 0){
-                          vel.x = -100;
+                          vel.x = -200;
                         } else {
                           vel.x = 0;
                         }
@@ -138,7 +171,7 @@ bool paddleEventSystem(SDL_Event event) {
                     case SDLK_d:
                       if(id == 2){
                         if(pos.x + 100  <= SCREEN_WIDTH){
-                          vel.x = 100;  
+                          vel.x = 200;  
                         } else{
                           vel.x = 0;
                         }
@@ -173,78 +206,7 @@ bool paddleEventSystem(SDL_Event event) {
             default:
                 break;
         }
-    // int key = event.key.keysym.sym;
-    // if (event.type == SDL_KEYDOWN){
-    //   switch (event.key.keysym.sym)
-    //   {
-    //   case SDLK_a:
-    //     if (id == 1){
-    //       vel.x = 100;
-    //     }
-    //     break;
-    //   case SDLK_d:
-    //     if(id == 1){
-    //       vel.x = -100;
-    //     }
-    //     break;
-    //   // case SDLK_d:
-    //   //   if (id == 2){
-    //   //     vel.x = 100;
-    //   //   }
-    //   //   break;
-    //   // case SDLK_a:
-    //   //   if (id == 2){
-    //   //     vel.x = -100;
-    //   //     std::cout << "Pressing A key" << std::endl;
-    //   //   }
-    //   //   break;
-    //   }
-    // } else {
-    //   std::cout << vel.x << std::endl;
-    //   vel.x = 0;
-    // }
-
-  }  
-
-
-
-
-
-
-
-  
-  // }
-  // switch(key){
-  //               //PLAYER 1 (bottom): uses arrows
-  //               case SDLK_RIGHT:
-  //                   if(paddle1Position.x + paddle1Rect.w + 100 <= SCREEN_WIDTH){
-  //                       paddle1Position.x += 100;
-  //                   }
-  //                   return true;
-  //                   break;
-  //               case SDLK_LEFT:
-  //                   if(paddle1Position.x - 100 >= 0){
-  //                       paddle1Position.x -= 100;
-  //                   }
-  //                   return true;
-  //                   break;
-
-  //               // PLAYER 2 (top): uses a and d keys
-  //               case SDLK_a:
-  //                   std::cout << 'hola' << std::endl;
-  //                   if(paddle2Position.x - 100 >= 0){
-  //                       paddle2Position.x -= 100;
-  //                   }
-  //                   return true;
-  //                   break;
-  //               case SDLK_d:
-  //                   if(paddle2Position.x + paddle2Rect.w + 100 <= SCREEN_WIDTH){
-  //                           paddle2Position.x += 100;
-  //                       }
-  //                   return true;
-  //                   break;
-  //           }
-  //       return false;
+}
 }
 
 
@@ -339,7 +301,7 @@ void Game::handleEvents()
 void Game::update()
 {
   std::cout << "Game Updating.." << std::endl;
-
+  bounceSystem(dT);
   movementSystem(dT);
 
 }
